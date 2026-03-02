@@ -26,7 +26,9 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error("[Cursor Global AI Manager] Activation error:", err);
+    void vscode.window.showErrorMessage(`Cursor Global AI Manager failed to activate: ${msg}`);
   }
 }
 

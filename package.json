@@ -15,7 +15,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:cursorGlobalAI.openManager"
   ],
   "main": "./out/extension.js",
   "contributes": {
