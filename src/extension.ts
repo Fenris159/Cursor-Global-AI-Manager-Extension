@@ -1350,9 +1350,33 @@ function getMinimalHtml(
       window.addEventListener('message', function(event) {
         var data = event.data;
         if (data.type === 'refreshLists') {
+          var expandedSections = [];
+          document.querySelectorAll('.sidebar-section.expanded').forEach(function(el) { expandedSections.push(el.getAttribute('data-category')); });
+          var expandedSkillFolders = [];
+          document.querySelectorAll('.sidebar-skill-folder.expanded').forEach(function(el) { expandedSkillFolders.push(el.getAttribute('data-folder')); });
+          var selectedFile = currentFile ? { category: currentFile.category, fileName: currentFile.fileName } : null;
           if (data.fileLists) fileLists = data.fileLists;
           if (typeof data.workspaceOpen === 'boolean') window.WORKSPACE_OPEN = data.workspaceOpen;
           ['rules', 'skills', 'subagents', 'commands'].forEach(function(cat) { renderCategoryList(cat, fileLists[cat] || []); });
+          expandedSections.forEach(function(cat) {
+            var section = document.querySelector('.sidebar-section[data-category="' + cat + '"]');
+            if (section) section.classList.add('expanded');
+          });
+          expandedSkillFolders.forEach(function(folderName) {
+            var folderDiv = document.querySelector('.sidebar-skill-folder[data-folder="' + folderName + '"]');
+            if (folderDiv) {
+              folderDiv.classList.add('expanded');
+              var contentsUl = folderDiv.querySelector('.sidebar-folder-contents');
+              if (contentsUl && contentsUl.children.length === 0) vscode.postMessage({ type: 'getSkillFolderContents', folderName: folderName });
+            }
+          });
+          if (selectedFile) {
+            if (selectedFile.category !== 'skills') {
+              var row = document.querySelector('.sidebar-section[data-category="' + selectedFile.category + '"] .file-row[data-file="' + selectedFile.fileName + '"]');
+              if (row) { row.classList.add('active'); }
+            }
+            vscode.postMessage({ type: 'getFileContent', category: selectedFile.category, fileName: selectedFile.fileName });
+          }
           return;
         }
         if (data.type === 'getSkillFolderContentsReply') {
@@ -1364,11 +1388,13 @@ function getMinimalHtml(
             li.textContent = entry;
             li.title = entry;
             li.setAttribute('data-entry', entry);
+            var fullName = data.folderName + '/' + entry;
+            if (currentFile && currentFile.category === 'skills' && currentFile.fileName === fullName) li.classList.add('active');
             li.addEventListener('click', function() {
               document.querySelectorAll('.sidebar-file-list .file-row').forEach(function(el) { el.classList.remove('active'); });
               document.querySelectorAll('.sidebar-folder-contents li').forEach(function(el) { el.classList.remove('active'); });
               li.classList.add('active');
-              vscode.postMessage({ type: 'getFileContent', category: 'skills', fileName: data.folderName + '/' + entry });
+              vscode.postMessage({ type: 'getFileContent', category: 'skills', fileName: fullName });
             });
             ul.appendChild(li);
           });
