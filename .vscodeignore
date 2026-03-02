@@ -5,3 +5,12 @@ tsconfig.json
 **/*.map
 node_modules/**
 !node_modules/@vscode/webview-ui-toolkit/**
+!node_modules/gray-matter/**
+!node_modules/kind-of/**
+!node_modules/section-matter/**
+!node_modules/strip-bom-string/**
+!node_modules/js-yaml/**
+!node_modules/argparse/**
+!node_modules/esprima/**
+!node_modules/extend-shallow/**
+!node_modules/is-extendable/**
