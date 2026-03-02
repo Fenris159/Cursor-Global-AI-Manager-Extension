@@ -43,7 +43,7 @@
     "compile:script": "node scripts/compile.js",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "package-vsix": "vsce package --out .vsce/cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix"
+    "package-vsix": "node scripts/package-vsix.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

@@ -43,7 +43,7 @@ npm run compile
 npm run package-vsix
 ```
 
-The `.vsix` file will be in the **`.vsce`** folder inside the project (e.g. `cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix`).
+The `.vsix` file will be in the **`.vsce`** folder inside the project as `<name>-<version>.vsix` (from `package.json`, e.g. `cursor-global-ai-manager-1.0.0.vsix`).
 
 If you haven’t run `npm install` in this project yet, do that once before compiling:
 
@@ -195,10 +195,9 @@ npm run compile
 npm run package-vsix
 ```
 
-The output file is **`.vsce/cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix`** (version from `package.json`).
+The output file is **`.vsce/<name>-<version>.vsix`** (name and version read from `package.json`).
 
-**Windows:** From the project root you can run **`scripts\package-vsix.cmd`**. It compiles first, then runs `npx @vscode/vsce package --out .vsce\...`. If npx fails, install vsce globally: `npm install -g @vscode/vsce`, then run:  
-`vsce package --out .vsce\cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix`
+**Windows:** From the project root you can run **`scripts\package-vsix.cmd`**. It compiles first, then runs `node scripts/package-vsix.js`, which uses `package.json` to build the output path. If vsce fails, install it globally: `npm install -g @vscode/vsce`, then run `npm run package-vsix`.
 
 **If vsce says "Couldn't detect the repository" or "link will be broken":** `package.json` includes a `repository` field so README/CHANGELOG links work. If you use a different Git host or path, edit `package.json` and set `repository.url` to your repo URL (e.g. `https://github.com/yourname/cursor-global-ai-manager.git`).
 

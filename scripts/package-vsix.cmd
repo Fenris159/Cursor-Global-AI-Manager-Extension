@@ -18,14 +18,5 @@ cd /d "%ROOT%"
 echo Compiling...
 "%NODE%" "%SCRIPTDIR%compile.js"
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-if not exist ".vsce" mkdir .vsce
-echo Packaging .vsix into .vsce\...
-set "NPX=%NODE:node.exe=npx.cmd%"
-if exist "%NPX%" (call "%NPX%" --yes @vscode/vsce package --out ".vsce\cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix") else (call npx --yes @vscode/vsce package --out ".vsce\cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix")
-if %ERRORLEVEL% equ 0 (
-  echo Done. .vsix is in .vsce\
-) else (
-  echo Package failed. Try: npm install -g @vscode/vsce
-  echo Then run: vsce package --out .vsce\cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix
-)
+"%NODE%" "%SCRIPTDIR%package-vsix.js"
 exit /b %ERRORLEVEL%
