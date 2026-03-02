@@ -8,8 +8,14 @@ export function activate(context: vscode.ExtensionContext): void {
   try {
     const openManagerCommand = vscode.commands.registerCommand(
       "cursorGlobalAI.openManager",
-      () => {
-        openManagerPanel(context);
+      async () => {
+        try {
+          await openManagerPanel(context);
+        } catch (err) {
+          void vscode.window.showErrorMessage(
+            "Manage User AI could not open. Check Help > Toggle Developer Tools > Console for details."
+          );
+        }
       }
     );
 
