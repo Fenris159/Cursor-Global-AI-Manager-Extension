@@ -34,9 +34,12 @@ try {
 }
 
 console.log("Packaging .vsix into .vsce/...");
+// Quote path so paths with spaces are not split by the shell;
+// otherwise vsce receives "Projects\Cursor" as the version argument.
+const outPathQuoted = process.platform === "win32" ? `"${outPath}"` : outPath;
 const result = spawnSync(
   "npx",
-  ["--yes", "@vscode/vsce", "package", "--out", outPath],
+  ["--yes", "@vscode/vsce", "package", "--out", outPathQuoted],
   { stdio: "inherit", cwd: projectRoot, shell: true }
 );
 

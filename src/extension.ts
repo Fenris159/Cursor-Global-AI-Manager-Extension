@@ -26,9 +26,7 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Cursor Global AI Manager] Activation error:", err);
-    void vscode.window.showErrorMessage(`Cursor Global AI Manager failed to activate: ${msg}`);
+    void vscode.window.showErrorMessage("Cursor Global AI Manager failed to activate. Check the Developer Console for details.");
   }
 }
 
@@ -269,16 +267,12 @@ async function openManagerPanel(context: vscode.ExtensionContext): Promise<void>
           panel.webview.postMessage({ type: "saveFileReply", error: "Invalid request" });
           return;
         }
-        const filePath = path.join(getGlobalCursorDir(context), msg.category, msg.fileName);
         try {
-          console.log("[Cursor Global AI Manager] saveFile:", filePath);
           await writeFileContent(context, msg.category, msg.fileName, msg.content);
           invalidateParsedCache(msg.category, msg.fileName);
-          console.log("[Cursor Global AI Manager] saveFile done");
           panel.webview.postMessage({ type: "saveFileReply" });
         } catch (err) {
           const errMsg = errorMessage(err, "Save failed");
-          console.error("[Cursor Global AI Manager] saveFile failed:", errMsg, err);
           panel.webview.postMessage({ type: "saveFileReply", error: errMsg });
         }
       } else if (msg.type === "getSkillFolderContents" && typeof msg.folderName === "string") {
@@ -498,7 +492,6 @@ async function openManagerPanel(context: vscode.ExtensionContext): Promise<void>
         }
         const basePath = getGlobalCursorDir(context);
         const filePath = path.join(basePath, msg.category, msg.fileName);
-        console.log("[Cursor Global AI Manager] openInEditor path:", filePath);
         const uri = vscode.Uri.file(filePath);
         try {
           await vscode.commands.executeCommand("vscode.open", uri, {
@@ -511,8 +504,7 @@ async function openManagerPanel(context: vscode.ExtensionContext): Promise<void>
           const is50Mb = raw.includes("50MB") || raw.includes("50 MB");
           const message = is50Mb
             ? "File outside workspace: add your .cursor folder to the workspace to edit here, or open the file from File Explorer."
-            : raw;
-          console.error("[Cursor Global AI Manager] openInEditor failed:", raw, err);
+            : "Could not open file.";
           panel.webview.postMessage({
             type: "openInEditorReply",
             error: message,
