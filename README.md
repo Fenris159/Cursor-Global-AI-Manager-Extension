@@ -7,6 +7,16 @@
 
 ---
 
+## Install from VSIX
+
+If you have a built `.vsix` (e.g. from [Releases](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/releases) or from building locally):
+
+1. In Cursor: **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`) → **Extensions: Install from VSIX...**
+2. Select the downloaded `.vsix` file (e.g. from the current release or from the project’s `.vsce/` folder).
+3. Reload the window if prompted.
+
+---
+
 ## Global impact
 
 > **Changes you make here apply to every Cursor workspace** (every project and folder). Add or edit content only when you intend it to affect all projects. Consider testing in a single project first if unsure.
