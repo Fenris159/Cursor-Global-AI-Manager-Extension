@@ -1,0 +1,9 @@
+---
+alwaysApply: false
+---
+
+# Project Rules
+
+<!-- Add your project-specific rules, coding standards, and conventions here.
+     See https://cursor.com/docs/context/rules for details.
+     Use globs for file-specific rules (e.g. **/*.ts) or set alwaysApply: true for global rules. -->

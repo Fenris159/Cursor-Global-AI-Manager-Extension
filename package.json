@@ -1,0 +1,57 @@
+{
+  "name": "cursor-global-ai-manager",
+  "displayName": "Cursor Global AI Manager",
+  "description": "Manage global user-level Cursor AI rules, skills, subagents, and commands.",
+  "version": "1.0.0",
+  "publisher": "cursor-global-ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cursorGlobalAI.openManager",
+        "title": "Manage User AI"
+      }
+    ],
+    "viewsContainers": {},
+    "configuration": {
+      "title": "Cursor Global AI Manager",
+      "properties": {
+        "cursorGlobalAI.globalCursorPath": {
+          "type": "string",
+          "default": "",
+          "description": "Override the global .cursor directory (e.g. for portable installs or custom home). Leave empty to use the same home as the IDE or the system home."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "compile:script": "node scripts/compile.js",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package-vsix": "vsce package --out .vsce/cursor-global-ai-cursor-global-ai-manager-1.0.0.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "gray-matter": "^4.0.3"
+  }
+}
