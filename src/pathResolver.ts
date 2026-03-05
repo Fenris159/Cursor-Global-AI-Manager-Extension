@@ -11,12 +11,18 @@ import * as vscode from "vscode";
  * - Enterprise setups, WSL, SSH, remote
  *
  * Optional: setting `cursorGlobalAI.globalCursorPath` overrides this (e.g. portable install).
+ * - Relative paths are resolved against the user's home directory (portable across OS and workspace).
+ * - Absolute paths are used as-is.
  */
 export function getGlobalCursorDir(context: vscode.ExtensionContext): string {
   const config = vscode.workspace.getConfiguration("cursorGlobalAI");
   const customPath = config.get<string>("globalCursorPath");
   if (customPath && customPath.trim().length > 0) {
-    return path.resolve(customPath.trim());
+    const trimmed = customPath.trim();
+    if (path.isAbsolute(trimmed)) {
+      return path.normalize(trimmed);
+    }
+    return path.join(os.homedir(), path.normalize(trimmed));
   }
   return path.join(os.homedir(), ".cursor");
 }

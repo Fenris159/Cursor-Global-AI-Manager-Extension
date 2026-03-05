@@ -2,8 +2,9 @@
   "name": "cursor-global-ai-manager",
   "displayName": "Cursor Global AI Manager",
   "description": "Manage global user-level Cursor AI rules, skills, subagents, and commands.",
-  "version": "1.0.0",
-  "publisher": "cursor-global-ai",
+  "version": "2.0.0",
+  "publisher": "fenris159",
+  "icon": "images/robot-manager128.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension.git"
@@ -32,7 +33,7 @@
         "cursorGlobalAI.globalCursorPath": {
           "type": "string",
           "default": "",
-          "description": "Override the global .cursor directory (e.g. for portable installs or custom home). Leave empty to use the same home as the IDE or the system home."
+          "description": "Override the global .cursor directory (e.g. for portable installs). Leave empty to use ~/.cursor. Use a relative path (e.g. portable/.cursor) to resolve from your home directory, or an absolute path for a fixed location."
         }
       }
     }

@@ -1,0 +1,80 @@
+<h1>Hooks</h1>
+<p>Hooks let you run custom scripts when the agent does certain things—for example when a session starts, before or after the agent edits a file, runs a shell command, or uses an MCP tool. You can use them to log activity, enforce checks, or change how the agent behaves. This extension manages your user-level <code>~/.cursor/hooks.json</code> (which events run which scripts) and the script files in <code>~/.cursor/hooks/</code>.</p>
+<h2 class="readme-h2">How to manage hooks with this extension</h2>
+<p>Expand the <strong>Hooks</strong> section in the sidebar. You'll see:</p>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>hooks.json</strong> — The configuration file that defines which scripts run at each event. Select it to view or edit. Use the trash icon to clear all hooks (empty config).</li>
+  <li style="margin: 0.25rem 0;"><strong>hooks</strong> (folder) — Expand to see your hook scripts. Each script has a checkbox to enable or disable it for its event. Use <strong>+ Create new</strong> to add a stub script, or <strong>Import</strong> (folder icon in the section header) to add an existing script from disk.</li>
+</ul>
+<p>Select a script to preview and edit it. Use <strong>Edit</strong> to open it in the editor. Use <strong>Sync to Workspace</strong> or <strong>Export</strong> to copy hooks into a project or elsewhere. Once you enable a script (check the box), it runs automatically whenever the agent triggers that event—no need to run a command or restart Cursor.</p>
+<h2 class="readme-h2">Placeholders: first run and respawn</h2>
+<p><strong>First run after install.</strong> The very first time you expand the Hooks section after installing this extension, the extension will:</p>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;">Create <code>hooks.json</code> with empty hooks if it doesn't exist (no scripts registered).</li>
+  <li style="margin: 0.25rem 0;">Create the 20 default hook script files in <code>~/.cursor/hooks/</code> (e.g. <code>after-file-edit.sh</code>, <code>session-start.sh</code>) as stub scripts if they are missing. These are added as files only; none are enabled in <code>hooks.json</code>, so they won't run until you check them.</li>
+</ul>
+<p>This happens only once per install. On later sessions, expanding Hooks just loads existing data and does not create or overwrite files.</p>
+<p><strong>Respawn placeholders.</strong> If you delete some or all of the default hook scripts and want them back as empty stubs, use <strong>Spawn placeholders</strong> in the hooks folder (under <strong>+ Create new</strong>). It creates only the default hook files that are currently missing; existing files are left unchanged. New files are created unchecked so they do not get added to <code>hooks.json</code>.</p>
+<h2 class="readme-h2">Script naming and event mapping</h2>
+<p>Script filenames map to hook events. Use kebab-case matching the event name: <code>after-file-edit.sh</code> → <code>afterFileEdit</code>, <code>before-shell-execution.js</code> → <code>beforeShellExecution</code>. Supported extensions: <code>.sh</code>, <code>.js</code>, <code>.ts</code>. When you enable a script via the checkbox, the extension registers it in <code>hooks.json</code> for the matching event.</p>
+<h2 class="readme-h2">Hook events</h2>
+<table style="border-collapse: collapse; font-size: 0.9em; margin: 0.5rem 0;">
+  <thead>
+    <tr><th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #444;">Event</th><th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #444;">When it runs</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>sessionStart</code></td><td style="padding: 0.25rem 0.5rem;">Agent/Tab session begins</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>sessionEnd</code></td><td style="padding: 0.25rem 0.5rem;">Agent/Tab session ends</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>beforeSubmitPrompt</code></td><td style="padding: 0.25rem 0.5rem;">Before user prompt is sent to the model</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterAgentResponse</code></td><td style="padding: 0.25rem 0.5rem;">After each agent response (streaming)</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterAgentThought</code></td><td style="padding: 0.25rem 0.5rem;">After each agent thought step</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>beforeReadFile</code></td><td style="padding: 0.25rem 0.5rem;">Before agent reads a file</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterFileEdit</code></td><td style="padding: 0.25rem 0.5rem;">After agent edits a file</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>beforeMCPExecution</code></td><td style="padding: 0.25rem 0.5rem;">Before MCP tool runs</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterMCPExecution</code></td><td style="padding: 0.25rem 0.5rem;">After MCP tool completes</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>beforeShellExecution</code></td><td style="padding: 0.25rem 0.5rem;">Before shell command runs</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterShellExecution</code></td><td style="padding: 0.25rem 0.5rem;">After shell command completes</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>subagentStart</code></td><td style="padding: 0.25rem 0.5rem;">Task tool (subagent) starts</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>subagentStop</code></td><td style="padding: 0.25rem 0.5rem;">Task tool (subagent) stops</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>preToolUse</code></td><td style="padding: 0.25rem 0.5rem;">Before any tool is used</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>postToolUse</code></td><td style="padding: 0.25rem 0.5rem;">After any tool completes</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>postToolUseFailure</code></td><td style="padding: 0.25rem 0.5rem;">After a tool use fails</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>stop</code></td><td style="padding: 0.25rem 0.5rem;">When agent loop completes (success, abort, or error)</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>preCompact</code></td><td style="padding: 0.25rem 0.5rem;">Before context window compaction</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>beforeTabFileRead</code></td><td style="padding: 0.25rem 0.5rem;">Before Tab reads a file (inline completions)</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;"><code>afterTabFileEdit</code></td><td style="padding: 0.25rem 0.5rem;">After Tab edits a file (inline completions)</td></tr>
+  </tbody>
+</table>
+<h2 class="readme-h2">Multiple scripts per event</h2>
+<p>You can enable more than one script for the same hook event (e.g. two scripts for <code>afterFileEdit</code>). Cursor runs <em>all</em> of them for that event; they all execute.</p>
+<h2 class="readme-h2">Duplicate extensions (advanced)</h2>
+<p>If you use multiple Cursor extensions or install the same extension in both user and workspace, Cursor follows VS Code's model:</p>
+<table style="border-collapse: collapse; font-size: 0.9em; margin: 0.5rem 0;">
+  <thead>
+    <tr><th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #444;">Situation</th><th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #444;">What happens</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 0.25rem 0.5rem;">Same extension ID (user + workspace)</td><td style="padding: 0.25rem 0.5rem;">Workspace version wins</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;">Different extension IDs</td><td style="padding: 0.25rem 0.5rem;">Both activate</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;">Same command ID</td><td style="padding: 0.25rem 0.5rem;">Last registered wins (can cause override issues)</td></tr>
+    <tr><td style="padding: 0.25rem 0.5rem;">Same event hook (multiple scripts)</td><td style="padding: 0.25rem 0.5rem;">All scripts for that event run</td></tr>
+  </tbody>
+</table>
+<p>To inspect what's running: open <strong>Help → Toggle Developer Tools</strong>, then check <strong>Running Extensions</strong> and activation events. You can also add logging in your hook scripts to confirm when they run.</p>
+<h2 class="readme-h2">Script contract</h2>
+<p>Each hook script receives input from Cursor and can optionally return output. Follow this contract so Cursor runs your script correctly:</p>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>Input</strong> — JSON passed via stdin (event-specific payload).</li>
+  <li style="margin: 0.25rem 0;"><strong>Output</strong> — Optional JSON via stdout; only some hooks (e.g. <code>before*</code>) use it to block or modify the action.</li>
+  <li style="margin: 0.25rem 0;"><strong>Exit 0</strong> — Success; the agent continues.</li>
+  <li style="margin: 0.25rem 0;"><strong>Exit 2</strong> — Block the action. Only meaningful for <code>before*</code> hooks (e.g. <code>beforeShellExecution</code>); Cursor will cancel the pending action. Other hooks should use exit 0.</li>
+</ul>
+<div class="readme-note" role="note">
+  <strong>Windows.</strong> <code>.sh</code> scripts require Bash (Git Bash, WSL, etc.). For cross-platform hooks, use <code>.js</code> or <code>.ts</code> — the extension registers them with <code>node ./hooks/your-script.js</code> so they run on any OS.
+</div>
+<div class="readme-links">
+  <strong>Documentation</strong>
+  <ul>
+    <li><a href="https://cursor.com/docs/agent/hooks" target="_blank" rel="noopener">Cursor Hooks docs</a> — Official reference</li>
+  </ul>
+</div>

@@ -1,0 +1,65 @@
+<h1>Cursor Global AI Manager</h1>
+<p>This extension lets you manage <strong>user-level</strong> Cursor AI settings: rules, skills, subagents, commands, and hooks that apply to <em>every</em> workspace you open, not just the current project. You edit files in your global <code>~/.cursor/</code> folder from one place.</p>
+<p><strong>How to open this panel:</strong> Click <strong>Manage User AI</strong> in the status bar (bottom of the window), or open the Command Palette (<code>Ctrl+Shift+P</code> / <code>Cmd+Shift+P</code>) and run <strong>Manage User AI</strong>.</p>
+<p>Changes you make here do not apply to existing chats. To use new or updated rules or skills, start a new chat or right-click the agent in the sidebar and choose <strong>Fork chat</strong>.</p>
+<div class="readme-warning" role="alert">
+  <strong>Global impact.</strong> Changes you make here apply to <em>every</em> Cursor workspace (every project and folder). Add or edit content only when you intend it to affect all projects. Consider testing in a single project first if unsure.
+</div>
+<h2 class="readme-h2">What's in the sidebar</h2>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>#README</strong> — This overview (you are here).</li>
+  <li style="margin: 0.25rem 0;"><strong>Rules</strong> — Instructions and context the AI follows in every project (e.g. coding style, project conventions).</li>
+  <li style="margin: 0.25rem 0;"><strong>Skills</strong> — Reusable agent skills (custom behaviors or workflows) stored as folders with a <code>SKILL.md</code>.</li>
+  <li style="margin: 0.25rem 0;"><strong>Subagents</strong> — Custom agent configurations (e.g. specialized task agents).</li>
+  <li style="margin: 0.25rem 0;"><strong>Commands</strong> — Custom slash commands you can run from the chat input.</li>
+  <li style="margin: 0.25rem 0;"><strong>Hooks</strong> — Scripts that run when the agent does certain things (e.g. after editing a file, before running a shell command).</li>
+</ul>
+<h2 class="readme-h2">How to use</h2>
+<p>Expand a category in the sidebar (Rules, Skills, Subagents, Commands, or Hooks), then select a file to preview it. Use <strong>Edit</strong> to open the file in the editor. Use <strong>+ Create new</strong> to add a new rule, skill, subagent, or command. For a skill folder, use the pencil icon to open that skill in a new window. Use the <strong>Import</strong> button (folder icon) in each category header to add files or skill folders from disk. Use <strong>Export</strong> (document-with-arrow) on a file or skill folder to save a copy elsewhere. Use <strong>Sync to Workspace</strong> (sync icon) to copy the selected item into this project's <code>.cursor</code> folder so you can share it with the team (e.g. for developers who don't have it in their global <code>~/.cursor/</code>).</p>
+<div class="readme-note" role="note">
+  <strong>Rules format.</strong> In Cursor's native <strong>Settings → Rules</strong>, a rule with only <code>alwaysApply: false</code> and no <code>description</code> or <code>globs</code> may show "Incorrect format". That's expected: when a rule isn't always applied, Cursor needs either a <strong>description</strong> (Apply Intelligently) or <strong>globs</strong> (Apply to Specific Files). Without either, the rule only applies when you <strong>@mention it</strong> in chat (Apply Manually).
+</div>
+<div class="readme-note" role="note">
+  <strong>Settings → Rules "User" tab.</strong> Rules you manage here (in <code>~/.cursor/rules/</code>) may not appear under the <strong>User</strong> filter in Cursor's native Settings → Rules. That's a Cursor UI quirk: the "User" tab often shows only rules stored in Cursor's internal state. Your file-based rules still apply globally and will appear under <strong>All</strong> (and in project filters). They are loaded and used by the AI.
+</div>
+<h2 class="readme-h2">Import, Export, and Sync</h2>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>Import</strong> — Add files or skill folders from your machine into a category. Rules are normalized to valid frontmatter.</li>
+  <li style="margin: 0.25rem 0;"><strong>Export</strong> — Save a copy of a file or skill folder to any location you choose.</li>
+  <li style="margin: 0.25rem 0;"><strong>Sync to Workspace</strong> — Copy the selected global file or skill folder into <code>.cursor/</code> in the open workspace. Creates the folder if needed. Requires a folder to be open (File → Open Folder).</li>
+</ul>
+<div class="readme-note" role="note">
+  <strong>Backups.</strong> Before any overwrite (Save, Import, or Create new with an existing name), the extension copies the current file or skill folder to <code>~/.cursor/.backups/</code> with a timestamped name (e.g. <code>20250302T143045-rules-my-rule.mdc</code> or <code>20250302T143045-skills-my-skill/</code>). To restore, copy a backup from <code>.backups/</code> back into the matching category folder under <code>~/.cursor/</code>.
+</div>
+<h2 class="readme-h2">Finding the user-level .cursor folder</h2>
+<p>The user-level <code>.cursor</code> folder (rules, skills, subagents, commands, hooks) lives in your home directory. Paths vary by OS:</p>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>Windows</strong> — <code>%USERPROFILE%\.cursor</code> (e.g. <code>C:\Users\YourName\.cursor</code>)</li>
+  <li style="margin: 0.25rem 0;"><strong>macOS</strong> — <code>~/.cursor</code> (e.g. <code>/Users/YourName/.cursor</code>)</li>
+  <li style="margin: 0.25rem 0;"><strong>Linux</strong> — <code>~/.cursor</code> (e.g. <code>/home/YourName/.cursor</code>)</li>
+</ul>
+<p>To open it quickly: run <strong>File → Open Folder</strong> and paste the path above for your OS, or use your terminal (<code>cd ~/.cursor</code> on macOS/Linux, <code>cd %USERPROFILE%\.cursor</code> on Windows).</p>
+<h2 class="readme-h2">Portability and syncing across machines</h2>
+<p>Cursor does not offer a built-in portable mode. To keep your user-level AI config (rules, skills, subagents, commands) consistent across machines or backups:</p>
+<div class="readme-note" role="note">
+  <strong>Custom data directory.</strong> You can launch Cursor with a custom data directory using <code>--user-data-dir</code> (e.g. <code>cursor --user-data-dir=/path/to/my-config</code>). This changes where Cursor stores app settings, extensions, and session state. Note: some user-level features (e.g. agent discovery) have been reported to ignore this flag and still use <code>~/.cursor</code>. For reliable portability of rules, skills, subagents, and commands, prefer syncing the <code>~/.cursor</code> folder itself (see options below).
+</div>
+<ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
+  <li style="margin: 0.25rem 0;"><strong>Copy the .cursor folder</strong> — Zip or copy <code>~/.cursor</code> to another machine and place it in the same home-directory path. Overwrites existing content.</li>
+  <li style="margin: 0.25rem 0;"><strong>Version control</strong> — Put <code>~/.cursor</code> in a private Git repo and clone it on each machine. Commit after changes; pull before starting work.</li>
+  <li style="margin: 0.25rem 0;"><strong>Cloud storage</strong> — Sync <code>~/.cursor</code> via Dropbox, Google Drive, or similar. Use a dedicated subfolder (e.g. <code>CursorConfig</code>) and symlink it to <code>~/.cursor</code> on each machine if you prefer not to sync the whole home directory.</li>
+  <li style="margin: 0.25rem 0;"><strong>Export / Sync to Workspace</strong> — Use this extension's <strong>Export</strong> or <strong>Sync to Workspace</strong> to move specific rules or skills into a project repo. Others can then copy them into their own <code>~/.cursor/</code> or use them from the project's <code>.cursor/</code> folder.</li>
+</ul>
+<div class="readme-note" role="note">
+  <strong>Cursor app config vs. user AI config.</strong> Cursor itself stores app settings (e.g. themes, keybindings) in platform-specific locations: <code>%APPDATA%\Cursor</code> (Windows), <code>~/Library/Application Support/Cursor</code> (macOS), <code>~/.config/Cursor</code> (Linux). The <code>~/.cursor</code> folder holds only user-level AI content (rules, skills, subagents, commands, hooks) that this extension manages.
+</div>
+<div class="readme-links">
+  <strong>Documentation</strong>
+  <ul>
+    <li><a href="#" data-doc="rules">Rules</a> — How global rules guide the AI</li>
+    <li><a href="#" data-doc="skills">Skills</a> — Agent skills and the .cursor folder</li>
+    <li><a href="#" data-doc="subagents">Subagents</a> — Custom agent configurations</li>
+    <li><a href="#" data-doc="commands">Commands</a> — Custom slash commands</li>
+    <li><a href="#" data-doc="hooks">Hooks</a> — Agent hooks configuration</li>
+  </ul>
+</div>

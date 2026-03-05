@@ -4,8 +4,55 @@ import * as vscode from "vscode";
 import matter from "gray-matter";
 import { getGlobalCursorDir, getBackupDir } from "./pathResolver";
 
-const CATEGORIES = ["rules", "skills", "subagents", "commands"] as const;
+const CATEGORIES = ["rules", "skills", "subagents", "commands", "hooks"] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+const HOOKS_CONFIG_FILE = "hooks.json";
+const HOOKS_SCRIPTS_DIR = "hooks";
+const HOOKS_BACKUP_DIR = "Hooks_Backup";
+const HOOKS_BACKUP_MAX_PER_FILE = 5;
+const USER_HOOKS_COMMAND_PREFIX = "./hooks/";
+
+/** Regex to parse a hook command string (e.g. "./hooks/after-file-edit.sh" or "node ./hooks/run.js") to the script name. */
+const HOOK_COMMAND_REGEX = /(?:^node\s+)?\.\/hooks\/(.+)$/;
+
+/** Parses a hooks.json command value to the script file name, or null if not a hook command we emit. */
+export function parseHookCommandToScriptName(command: string): string | null {
+  const m = String(command).match(HOOK_COMMAND_REGEX);
+  return m ? m[1] : null;
+}
+
+/** Builds the command string for hooks.json. .js and .ts are run with Node so they work on all platforms. */
+function hookCommandForScript(scriptName: string): string {
+  const scriptPath = USER_HOOKS_COMMAND_PREFIX + scriptName;
+  if (scriptName.endsWith(".js") || scriptName.endsWith(".ts")) return "node " + scriptPath;
+  return scriptPath;
+}
+
+/** Cursor hook event names (camelCase). Scripts are mapped by name, e.g. after-file-edit.sh → afterFileEdit. */
+const HOOKS_KNOWN_EVENTS = new Set([
+  "afterAgentResponse", "afterAgentThought", "stop", "preCompact", "beforeSubmitPrompt",
+  "beforeReadFile", "afterFileEdit", "beforeMCPExecution", "afterMCPExecution",
+  "beforeShellExecution", "afterShellExecution", "subagentStart", "subagentStop",
+  "preToolUse", "postToolUse", "postToolUseFailure", "sessionStart", "sessionEnd",
+  "afterTabFileEdit", "beforeTabFileRead",
+]);
+
+/** Default hook script filenames (.sh) for the 20 known events. Used for placeholder generation. */
+export const DEFAULT_HOOK_SCRIPT_NAMES: string[] = [...HOOKS_KNOWN_EVENTS].sort().map((event) => {
+  const kebab = event.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, "");
+  return kebab + ".sh";
+});
+
+/** Derives Cursor event name from script filename: after-file-edit.sh → afterFileEdit, after-mcp-execution.sh → afterMCPExecution, etc. */
+function scriptNameToEvent(scriptName: string): string {
+  const base = scriptName.replace(/\.(sh|js|ts)$/i, "").trim();
+  const camel = base.replace(/-([a-z])/gi, (_, c) => c.toUpperCase());
+  if (HOOKS_KNOWN_EVENTS.has(camel)) return camel;
+  const lower = camel.toLowerCase();
+  const match = [...HOOKS_KNOWN_EVENTS].find((e) => e.toLowerCase() === lower);
+  return match ?? "afterFileEdit";
+}
 
 /**
  * Ensures the global .cursor directory and subdirectories (rules, skills, subagents, commands) exist.
@@ -35,6 +82,9 @@ export async function listFilesInCategory(
   category: Category
 ): Promise<string[]> {
   const basePath = getGlobalCursorDir(context);
+  if (category === "hooks") {
+    return [HOOKS_CONFIG_FILE];
+  }
   const categoryUri = vscode.Uri.file(path.join(basePath, category));
 
   let entries: [string, vscode.FileType][];
@@ -67,6 +117,211 @@ export async function listFilesInCategory(
   }
 
   return files.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
+/** Path for a hooks file: hooks.json at base, scripts at base/hooks/<name>. */
+export function getHooksFilePath(basePath: string, fileName: string): string {
+  if (fileName === HOOKS_CONFIG_FILE) return path.join(basePath, HOOKS_CONFIG_FILE);
+  const scriptName = fileName.startsWith(HOOKS_SCRIPTS_DIR + "/") ? fileName.slice(HOOKS_SCRIPTS_DIR.length + 1) : fileName;
+  return path.join(basePath, HOOKS_SCRIPTS_DIR, scriptName);
+}
+
+/** Absolute path for any category file (for openInEditor, etc.). */
+export function getFilePathForCategory(
+  context: vscode.ExtensionContext,
+  category: Category,
+  fileName: string
+): string {
+  const basePath = getGlobalCursorDir(context);
+  if (category === "hooks") return getHooksFilePath(basePath, fileName);
+  return path.join(basePath, category, fileName);
+}
+
+export interface HooksData {
+  configFile: string;
+  scripts: string[];
+  enabledScripts: string[];
+}
+
+/** Lists hooks config file name, script names in hooks/, and which scripts are enabled in hooks.json. */
+export async function getHooksData(context: vscode.ExtensionContext): Promise<HooksData> {
+  const basePath = getGlobalCursorDir(context);
+  const scriptsDir = path.join(basePath, HOOKS_SCRIPTS_DIR);
+  let scripts: string[] = [];
+  try {
+    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(scriptsDir));
+    for (const [name, type] of entries) {
+      if (type === vscode.FileType.File && (name.endsWith(".sh") || name.endsWith(".js") || name.endsWith(".ts"))) {
+        scripts.push(name);
+      }
+    }
+  } catch {
+    // no hooks dir
+  }
+  scripts.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  let enabledScripts: string[] = [];
+  try {
+    const raw = await fs.readFile(path.join(basePath, HOOKS_CONFIG_FILE), "utf8");
+    const config = JSON.parse(raw) as {
+      hooks?: Record<string, Array<{ command?: string }>> | Array<{ command?: string }>;
+    };
+    const hooks = config.hooks;
+    const seen = new Set<string>();
+    if (Array.isArray(hooks)) {
+      for (const entry of hooks) {
+        const cmd = entry?.command;
+        if (typeof cmd !== "string") continue;
+        const scriptName = parseHookCommandToScriptName(cmd);
+        if (scriptName) seen.add(scriptName);
+      }
+    } else if (hooks && typeof hooks === "object" && !Array.isArray(hooks)) {
+      for (const entries of Object.values(hooks)) {
+        if (!Array.isArray(entries)) continue;
+        for (const entry of entries) {
+          const cmd = entry?.command;
+          if (typeof cmd !== "string") continue;
+          const scriptName = parseHookCommandToScriptName(cmd);
+          if (scriptName) seen.add(scriptName);
+        }
+      }
+    }
+    enabledScripts = scripts.filter((s) => seen.has(s));
+  } catch {
+    // no hooks.json or invalid
+  }
+
+  return { configFile: HOOKS_CONFIG_FILE, scripts, enabledScripts };
+}
+
+/** Clears hooks.json to empty config (no hooks to load). */
+export async function clearHooksConfig(context: vscode.ExtensionContext): Promise<void> {
+  const basePath = getGlobalCursorDir(context);
+  const configPath = path.join(basePath, HOOKS_CONFIG_FILE);
+  const content = stringifyHooksConfig(1, {});
+  await fs.writeFile(configPath, content, "utf8");
+}
+
+/** Writes hooks config flat: one line per event with array inline. */
+function stringifyHooksConfig(
+  version: number,
+  hooks: Record<string, Array<{ command: string }>>
+): string {
+  const eventKeys = Object.keys(hooks).sort();
+  if (eventKeys.length === 0) {
+    return `{"version":${version},"hooks":{}}\n`;
+  }
+  const entries = eventKeys.map((eventKey) => {
+    const commands = hooks[eventKey].filter((e) => typeof e?.command === "string");
+    const arr = commands.map((e) => `{"command":${JSON.stringify(e.command)}}`).join(",");
+    return `  "${eventKey}":[${arr}]`;
+  });
+  return `{"version":${version},"hooks":{\n${entries.join(",\n")}\n}}\n`;
+}
+
+/** Adds or removes a script from hooks.json. Script is registered under the event that matches its name (e.g. before-shell-execution.sh → beforeShellExecution). */
+export async function setHookScriptEnabled(
+  context: vscode.ExtensionContext,
+  scriptName: string,
+  enabled: boolean
+): Promise<void> {
+  const basePath = getGlobalCursorDir(context);
+  const configPath = path.join(basePath, HOOKS_CONFIG_FILE);
+  let hooks: Record<string, Array<{ command: string }>> = {};
+  let version = 1;
+  let existingRaw: string | null = null;
+  try {
+    const raw = await fs.readFile(configPath, "utf8");
+    existingRaw = raw;
+    const config = JSON.parse(raw) as {
+      version?: number;
+      hooks?: Record<string, Array<{ command: string }>> | Array<{ command: string }>;
+    };
+    if (typeof config.version === "number") version = config.version;
+    const h = config.hooks;
+    if (Array.isArray(h)) {
+      const arr = h.filter((e) => typeof e?.command === "string") as Array<{ command: string }>;
+      if (arr.length) hooks.afterFileEdit = arr;
+    } else if (h && typeof h === "object") {
+      for (const [key, arr] of Object.entries(h)) {
+        if (Array.isArray(arr) && arr.length) {
+          hooks[key] = arr.filter((e) => typeof e?.command === "string") as Array<{ command: string }>;
+        }
+      }
+    }
+  } catch {
+    // use empty hooks
+  }
+  const command = hookCommandForScript(scriptName);
+  const plainPath = USER_HOOKS_COMMAND_PREFIX + scriptName;
+  const event = scriptNameToEvent(scriptName);
+  if (enabled) {
+    const arr = hooks[event] || [];
+    const already = arr.some((e) => e.command === command || e.command === plainPath);
+    if (!already) hooks[event] = [...arr, { command }];
+  } else {
+    for (const key of Object.keys(hooks)) {
+      hooks[key] = hooks[key].filter(
+        (e) => e.command !== command && e.command !== plainPath
+      );
+      if (hooks[key].length === 0) delete hooks[key];
+    }
+  }
+  if (existingRaw !== null) await backupHooksFileAndPrune(context, HOOKS_CONFIG_FILE, existingRaw);
+  await fs.writeFile(configPath, stringifyHooksConfig(version, hooks), "utf8");
+}
+
+function getHookStubContent(fileName: string): string {
+  return `#!/bin/bash
+# Hook script: ${fileName}
+# Input: JSON via stdin. Output: optional JSON via stdout. Exit 0 = success, 2 = block.
+cat > /dev/null
+echo '{}'
+exit 0
+`;
+}
+
+/** Creates a new hook script in hooks/ with a stub. Returns the script file name. */
+export async function createHookScript(context: vscode.ExtensionContext, baseName: string): Promise<string> {
+  const basePath = getGlobalCursorDir(context);
+  const hooksDir = path.join(basePath, HOOKS_SCRIPTS_DIR);
+  await fs.mkdir(hooksDir, { recursive: true });
+  const safe = baseName.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "-") || "hook";
+  const fileName = safe.endsWith(".sh") ? safe : safe + ".sh";
+  const filePath = path.join(hooksDir, fileName);
+  await fs.writeFile(filePath, getHookStubContent(fileName), "utf8");
+  return fileName;
+}
+
+/** Creates hooks.json with empty hooks if it does not exist. If it exists, leaves it unchanged. */
+export async function ensureHooksConfigExists(context: vscode.ExtensionContext): Promise<void> {
+  const basePath = getGlobalCursorDir(context);
+  const configPath = path.join(basePath, HOOKS_CONFIG_FILE);
+  try {
+    await fs.access(configPath);
+  } catch {
+    await fs.writeFile(configPath, stringifyHooksConfig(1, {}), "utf8");
+  }
+}
+
+/** Creates absent default hook script files as placeholders (not added to hooks.json). Idempotent. */
+export async function ensureDefaultHookPlaceholders(context: vscode.ExtensionContext): Promise<void> {
+  const basePath = getGlobalCursorDir(context);
+  const hooksDir = path.join(basePath, HOOKS_SCRIPTS_DIR);
+  await fs.mkdir(hooksDir, { recursive: true });
+  for (const fileName of DEFAULT_HOOK_SCRIPT_NAMES) {
+    const filePath = path.join(hooksDir, fileName);
+    try {
+      await fs.access(filePath);
+    } catch {
+      await fs.writeFile(filePath, getHookStubContent(fileName), "utf8");
+    }
+  }
+}
+
+/** Same as ensureDefaultHookPlaceholders; exposed for manual "Spawn placeholders" action. */
+export async function spawnAbsentHookPlaceholders(context: vscode.ExtensionContext): Promise<void> {
+  await ensureDefaultHookPlaceholders(context);
 }
 
 /**
@@ -112,6 +367,15 @@ export async function deleteInCategory(
   fileName: string
 ): Promise<void> {
   const basePath = getGlobalCursorDir(context);
+  if (category === "hooks") {
+    if (fileName === HOOKS_CONFIG_FILE) {
+      await clearHooksConfig(context);
+      return;
+    }
+    const targetPath = getHooksFilePath(basePath, fileName);
+    await fs.rm(targetPath, { recursive: true, force: true });
+    return;
+  }
   const targetPath = path.join(basePath, category, fileName);
   await fs.rm(targetPath, { recursive: true, force: true });
 }
@@ -127,11 +391,11 @@ export async function readFileContent(
   fileName: string
 ): Promise<string> {
   const basePath = getGlobalCursorDir(context);
-  const fileUri = vscode.Uri.file(path.join(basePath, category, fileName));
+  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, category, fileName);
+  const fileUri = vscode.Uri.file(filePath);
   const data = await vscode.workspace.fs.readFile(fileUri);
   const raw = new TextDecoder("utf-8").decode(data);
-  // Parse frontmatter so we can use it later (e.g. enable/disable, validation)
-  matter(raw);
+  if (category !== "hooks") matter(raw);
   return raw;
 }
 
@@ -147,8 +411,15 @@ export async function writeFileContent(
   content: string
 ): Promise<void> {
   const basePath = getGlobalCursorDir(context);
-  const filePath = path.join(basePath, category, fileName);
-  await backupBeforeOverwrite(context, category, fileName);
+  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, category, fileName);
+  if (category === "hooks") {
+    if (await pathExists(filePath)) {
+      const currentContent = await fs.readFile(filePath, "utf8");
+      await backupHooksFileAndPrune(context, fileName, currentContent);
+    }
+  } else {
+    await backupBeforeOverwrite(context, category, fileName);
+  }
   const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(filePath, content, "utf8");
@@ -160,7 +431,7 @@ export async function writeFileContent(
  */
 export async function exportFileToPath(
   context: vscode.ExtensionContext,
-  category: "rules" | "subagents" | "commands",
+  category: "rules" | "subagents" | "commands" | "hooks",
   fileName: string,
   targetFilePath: string
 ): Promise<void> {
@@ -186,6 +457,23 @@ export async function exportSkillFolderToPath(
   await fs.cp(sourceDir, destDir, { recursive: true });
 }
 
+/** Imports a file into ~/.cursor/hooks/. Saves as *.sh regardless of source extension. Returns the destination file name. */
+export async function importFileIntoHooks(
+  context: vscode.ExtensionContext,
+  sourceFilePath: string
+): Promise<string> {
+  const basePath = getGlobalCursorDir(context);
+  const hooksDir = path.join(basePath, HOOKS_SCRIPTS_DIR);
+  await fs.mkdir(hooksDir, { recursive: true });
+  const baseName = path.basename(sourceFilePath);
+  const nameWithoutExt = path.basename(baseName, path.extname(baseName)) || baseName;
+  const safe = nameWithoutExt.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "-").trim() || "imported";
+  const fileName = safe.endsWith(".sh") ? safe : safe + ".sh";
+  const destPath = path.join(hooksDir, fileName);
+  await fs.copyFile(sourceFilePath, destPath);
+  return fileName;
+}
+
 /**
  * Syncs a global file or skill folder into the workspace .cursor folder.
  * Creates workspaceRoot/.cursor/<category>/ as needed. For skills, copies the
@@ -207,6 +495,16 @@ export async function syncToWorkspace(
     const sourceDir = path.join(basePath, "skills", folderName);
     const destDir = path.join(categoryDir, folderName);
     await fs.cp(sourceDir, destDir, { recursive: true });
+  } else if (category === "hooks") {
+    const basePath = getGlobalCursorDir(context);
+    const sourcePath = getHooksFilePath(basePath, fileName);
+    const destPath =
+      fileName === HOOKS_CONFIG_FILE
+        ? path.join(workspaceCursor, HOOKS_CONFIG_FILE)
+        : path.join(workspaceCursor, HOOKS_SCRIPTS_DIR, fileName);
+    await fs.mkdir(path.dirname(destPath), { recursive: true });
+    const content = await readFileContent(context, category, fileName);
+    await fs.writeFile(destPath, content, "utf8");
   } else {
     const sourcePath = path.join(basePath, category, fileName);
     const destPath = path.join(categoryDir, fileName);
@@ -269,6 +567,8 @@ Subagent instructions and context.
 
 What this command does when invoked with \`/${baseName.replace(/\s+/g, "-").toLowerCase()}\` in chat.
 `,
+
+  hooks: () => "", // Not used; hook scripts are created via createHookScript
 };
 
 /** Shape of rule frontmatter used for preview/UI (description, alwaysApply, globs). */
@@ -438,6 +738,50 @@ async function pathExists(p: string): Promise<boolean> {
 /** Filesystem-safe timestamp for backup folder names (e.g. 20250302T143045). */
 function backupTimestamp(): string {
   return new Date().toISOString().slice(0, 19).replace(/[-:]/g, "");
+}
+
+/** Path to ~/.cursor/Hooks_Backup (or custom base + Hooks_Backup). */
+function getHooksBackupDir(context: vscode.ExtensionContext): string {
+  return path.join(getGlobalCursorDir(context), HOOKS_BACKUP_DIR);
+}
+
+/**
+ * Backs up hooks config or a hook script to Hooks_Backup with format <timestamp>-<fileName>.bak.
+ * Keeps only the last HOOKS_BACKUP_MAX_PER_FILE backups per logical file (by fileName).
+ */
+export async function backupHooksFileAndPrune(
+  context: vscode.ExtensionContext,
+  fileName: string,
+  currentContent: string
+): Promise<void> {
+  const backupRoot = getHooksBackupDir(context);
+  await fs.mkdir(backupRoot, { recursive: true });
+  const ts = backupTimestamp();
+  const safeName = fileName.replace(/[/\\]/g, "-");
+  const backupFileName = `${ts}-${safeName}.bak`;
+  const backupPath = path.join(backupRoot, backupFileName);
+  await fs.writeFile(backupPath, currentContent, "utf8");
+  const pattern = "*-" + safeName + ".bak";
+  let entries: string[];
+  try {
+    entries = await fs.readdir(backupRoot);
+  } catch {
+    return;
+  }
+  const matches = entries.filter((e) => {
+    if (e.length < pattern.length) return false;
+    return e.endsWith("-" + safeName + ".bak");
+  });
+  if (matches.length <= HOOKS_BACKUP_MAX_PER_FILE) return;
+  matches.sort();
+  const toRemove = matches.length - HOOKS_BACKUP_MAX_PER_FILE;
+  for (let i = 0; i < toRemove; i++) {
+    try {
+      await fs.unlink(path.join(backupRoot, matches[i]));
+    } catch {
+      // ignore
+    }
+  }
 }
 
 /**
