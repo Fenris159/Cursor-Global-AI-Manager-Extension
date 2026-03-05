@@ -1,4 +1,4 @@
-# Cursor Global AI Manager
+<img src="images/robot-manager512.png" alt="Cursor Global AI Manager" width="80" height="80" /> <h1>Cursor Global AI Manager</h1>
 
 > **Manage user-level rules, skills, subagents, commands, and hooks in one place.**  
 > Open the panel from the status bar (**Manage User AI**) or the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P` → **Manage User AI**) to browse, preview, and edit everything in `~/.cursor/` without leaving Cursor.
