@@ -7,6 +7,11 @@ import { getGlobalCursorDir, getBackupDir } from "./pathResolver";
 const CATEGORIES = ["rules", "skills", "subagents", "commands", "hooks"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
+/** Directory name on disk. Cursor discovers user-level subagents in ~/.cursor/agents/, not "subagents". */
+function getCategoryDir(category: Category): string {
+  return category === "subagents" ? "agents" : category;
+}
+
 const HOOKS_CONFIG_FILE = "hooks.json";
 const HOOKS_SCRIPTS_DIR = "hooks";
 const HOOKS_BACKUP_DIR = "Hooks_Backup";
@@ -55,7 +60,7 @@ function scriptNameToEvent(scriptName: string): string {
 }
 
 /**
- * Ensures the global .cursor directory and subdirectories (rules, skills, subagents, commands) exist.
+ * Ensures the global .cursor directory and subdirectories (rules, skills, agents, commands, hooks) exist.
  * Creates any missing directories.
  */
 export async function ensureGlobalCursorDirs(
@@ -67,7 +72,7 @@ export async function ensureGlobalCursorDirs(
   await vscode.workspace.fs.createDirectory(baseUri);
 
   for (const category of CATEGORIES) {
-    const dirUri = vscode.Uri.file(path.join(basePath, category));
+    const dirUri = vscode.Uri.file(path.join(basePath, getCategoryDir(category)));
     await vscode.workspace.fs.createDirectory(dirUri);
   }
 }
@@ -85,7 +90,7 @@ export async function listFilesInCategory(
   if (category === "hooks") {
     return [HOOKS_CONFIG_FILE];
   }
-  const categoryUri = vscode.Uri.file(path.join(basePath, category));
+  const categoryUri = vscode.Uri.file(path.join(basePath, getCategoryDir(category)));
 
   let entries: [string, vscode.FileType][];
   try {
@@ -99,7 +104,7 @@ export async function listFilesInCategory(
   if (category === "skills") {
     for (const [name, type] of entries) {
       if (type === vscode.FileType.Directory) {
-        const skillMdUri = vscode.Uri.file(path.join(basePath, category, name, "SKILL.md"));
+        const skillMdUri = vscode.Uri.file(path.join(basePath, getCategoryDir(category), name, "SKILL.md"));
         try {
           await vscode.workspace.fs.stat(skillMdUri);
           files.push(`${name}/SKILL.md`);
@@ -134,7 +139,7 @@ export function getFilePathForCategory(
 ): string {
   const basePath = getGlobalCursorDir(context);
   if (category === "hooks") return getHooksFilePath(basePath, fileName);
-  return path.join(basePath, category, fileName);
+  return path.join(basePath, getCategoryDir(category), fileName);
 }
 
 export interface HooksData {
@@ -376,7 +381,7 @@ export async function deleteInCategory(
     await fs.rm(targetPath, { recursive: true, force: true });
     return;
   }
-  const targetPath = path.join(basePath, category, fileName);
+  const targetPath = path.join(basePath, getCategoryDir(category), fileName);
   await fs.rm(targetPath, { recursive: true, force: true });
 }
 
@@ -391,7 +396,7 @@ export async function readFileContent(
   fileName: string
 ): Promise<string> {
   const basePath = getGlobalCursorDir(context);
-  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, category, fileName);
+  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, getCategoryDir(category), fileName);
   const fileUri = vscode.Uri.file(filePath);
   const data = await vscode.workspace.fs.readFile(fileUri);
   const raw = new TextDecoder("utf-8").decode(data);
@@ -411,7 +416,7 @@ export async function writeFileContent(
   content: string
 ): Promise<void> {
   const basePath = getGlobalCursorDir(context);
-  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, category, fileName);
+  const filePath = category === "hooks" ? getHooksFilePath(basePath, fileName) : path.join(basePath, getCategoryDir(category), fileName);
   if (category === "hooks") {
     if (await pathExists(filePath)) {
       const currentContent = await fs.readFile(filePath, "utf8");
@@ -487,7 +492,7 @@ export async function syncToWorkspace(
 ): Promise<void> {
   const basePath = getGlobalCursorDir(context);
   const workspaceCursor = path.join(workspaceRoot, ".cursor");
-  const categoryDir = path.join(workspaceCursor, category);
+  const categoryDir = path.join(workspaceCursor, getCategoryDir(category));
   await fs.mkdir(categoryDir, { recursive: true });
 
   if (category === "skills") {
@@ -506,7 +511,7 @@ export async function syncToWorkspace(
     const content = await readFileContent(context, category, fileName);
     await fs.writeFile(destPath, content, "utf8");
   } else {
-    const sourcePath = path.join(basePath, category, fileName);
+    const sourcePath = path.join(basePath, getCategoryDir(category), fileName);
     const destPath = path.join(categoryDir, fileName);
     await fs.mkdir(path.dirname(destPath), { recursive: true });
     const content = await readFileContent(context, category, fileName);
@@ -641,7 +646,7 @@ export async function importFileIntoCategory(
     content = raw;
   }
 
-  const destPath = path.join(basePath, category, targetFileName);
+  const destPath = path.join(basePath, getCategoryDir(category), targetFileName);
   await backupBeforeOverwrite(context, category, targetFileName);
   await fs.mkdir(path.dirname(destPath), { recursive: true });
   await fs.writeFile(destPath, content, "utf8");
@@ -806,7 +811,7 @@ export async function backupBeforeOverwrite(
     await fs.mkdir(backupRoot, { recursive: true });
     await fs.cp(sourceDir, destDir, { recursive: true });
   } else {
-    const sourcePath = path.join(basePath, category, fileName);
+    const sourcePath = path.join(basePath, getCategoryDir(category), fileName);
     if (!(await pathExists(sourcePath))) return;
     const safeName = fileName.replace(/[/\\]/g, "-");
     const destPath = path.join(backupRoot, `${ts}-${category}-${safeName}`);

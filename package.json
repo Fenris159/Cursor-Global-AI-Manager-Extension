@@ -2,7 +2,7 @@
   "name": "cursor-global-ai-manager",
   "displayName": "Cursor Global AI Manager",
   "description": "Manage global user-level Cursor AI rules, skills, subagents, and commands.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "publisher": "fenris159",
   "icon": "images/robot-manager128.png",
   "repository": {

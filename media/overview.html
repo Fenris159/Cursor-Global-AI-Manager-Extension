@@ -10,7 +10,7 @@
   <li style="margin: 0.25rem 0;"><strong>#README</strong> — This overview (you are here).</li>
   <li style="margin: 0.25rem 0;"><strong>Rules</strong> — Instructions and context the AI follows in every project (e.g. coding style, project conventions).</li>
   <li style="margin: 0.25rem 0;"><strong>Skills</strong> — Reusable agent skills (custom behaviors or workflows) stored as folders with a <code>SKILL.md</code>.</li>
-  <li style="margin: 0.25rem 0;"><strong>Subagents</strong> — Custom agent configurations (e.g. specialized task agents).</li>
+  <li style="margin: 0.25rem 0;"><strong>Subagents</strong> — Custom agent configurations (e.g. specialized task agents). Files live in <code>~/.cursor/agents/</code> (Cursor’s folder name).</li>
   <li style="margin: 0.25rem 0;"><strong>Commands</strong> — Custom slash commands you can run from the chat input.</li>
   <li style="margin: 0.25rem 0;"><strong>Hooks</strong> — Scripts that run when the agent does certain things (e.g. after editing a file, before running a shell command).</li>
 </ul>
@@ -32,7 +32,7 @@
   <strong>Backups.</strong> Before any overwrite (Save, Import, or Create new with an existing name), the extension copies the current file or skill folder to <code>~/.cursor/.backups/</code> with a timestamped name (e.g. <code>20250302T143045-rules-my-rule.mdc</code> or <code>20250302T143045-skills-my-skill/</code>). To restore, copy a backup from <code>.backups/</code> back into the matching category folder under <code>~/.cursor/</code>.
 </div>
 <h2 class="readme-h2">Finding the user-level .cursor folder</h2>
-<p>The user-level <code>.cursor</code> folder (rules, skills, subagents, commands, hooks) lives in your home directory. Paths vary by OS:</p>
+<p>The user-level <code>.cursor</code> folder (rules, skills, agents, commands, hooks) lives in your home directory. Subagents are stored in <code>agents/</code>, not “subagents”. Paths vary by OS:</p>
 <ul class="main-placeholder ul-naked" style="list-style: none; padding-left: 0; margin: 0.5rem 0 0 0;">
   <li style="margin: 0.25rem 0;"><strong>Windows</strong> — <code>%USERPROFILE%\.cursor</code> (e.g. <code>C:\Users\YourName\.cursor</code>)</li>
   <li style="margin: 0.25rem 0;"><strong>macOS</strong> — <code>~/.cursor</code> (e.g. <code>/Users/YourName/.cursor</code>)</li>

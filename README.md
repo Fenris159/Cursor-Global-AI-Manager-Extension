@@ -69,13 +69,13 @@ Use the **?** button next to each category name in the sidebar to open Cursor’
 |---|-----------|------------|
 | 📋 | **Rules** | Global rules that guide the AI (e.g. coding style, project conventions). |
 | 🧠 | **Skills** | Agent skills (reusable capabilities); each skill is a folder with a `SKILL.md`. |
-| 🤖 | **Subagents** | Custom agent configurations (e.g. specialized subagents for different tasks). |
+| 🤖 | **Subagents** | Custom agent configurations (e.g. specialized subagents for different tasks). Stored in `~/.cursor/agents/` (Cursor’s folder name). |
 | ⚡ | **Commands** | Custom slash commands you can run from chat. |
 | 🪝 | **Hooks** | Scripts that run when the agent does certain things (e.g. after editing a file, before running a shell command). Managed via `~/.cursor/hooks.json` and `~/.cursor/hooks/`. |
 
 ### Import
 
-- **Rules, Subagents, Commands:** Click the folder icon in the category header and pick a file. It is copied into `~/.cursor/<category>/` (rules are normalized to `.mdc` with valid frontmatter).
+- **Rules, Subagents, Commands:** Click the folder icon in the category header and pick a file. It is copied into `~/.cursor/rules/`, `~/.cursor/agents/`, or `~/.cursor/commands/` (subagents use the `agents` folder; rules are normalized to `.mdc` with valid frontmatter).
 - **Skills:** Choose to import a whole folder (copied as a skill folder) or a single `SKILL.md` file (a new skill folder is created from it).
 - **Hooks:** Import adds script files into `~/.cursor/hooks/`. Enable a script with its checkbox to register it for that event in `hooks.json`.
 
@@ -87,7 +87,7 @@ Use the **?** button next to each category name in the sidebar to open Cursor’
 
 ### Sync to Workspace
 
-- Copies the selected global file or skill folder (or hook script) into the **current workspace’s** `.cursor` folder under the same category (e.g. `workspace/.cursor/rules/my-rule.mdc`, `workspace/.cursor/skills/my-skill/`, or `workspace/.cursor/hooks/after-file-edit.sh`). Creates the `.cursor` and category folder if they don’t exist.
+- Copies the selected global file or skill folder (or hook script) into the **current workspace’s** `.cursor` folder (e.g. `workspace/.cursor/rules/my-rule.mdc`, `workspace/.cursor/agents/my-agent.md`, `workspace/.cursor/skills/my-skill/`, or `workspace/.cursor/hooks/after-file-edit.sh`). Subagents sync to `workspace/.cursor/agents/`. Creates the `.cursor` and category folder if they don’t exist.
 - Useful when you want to move a global rule, skill, subagent, command, or hook into the project so other developers can use it. Requires a folder to be open (File → Open Folder).
 
 ### Backups

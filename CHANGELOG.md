@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-03-02
+
+### Fixed
+
+- Subagents are now stored in `~/.cursor/agents/` (Cursor’s folder) instead of `~/.cursor/subagents/`, so Cursor discovers them correctly. Sync to Workspace also writes to `workspace/.cursor/agents/`.
+
 ## [2.0.0] - 2025-03-02
 
 ### Added
@@ -29,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lazy-loaded Monaco preview, debounced filesystem watcher, parsed-content cache.
 - Platform-agnostic paths; Windows fallback `scripts\compile.cmd` for build.
 
+[2.0.1]: https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/compare/v1.0.0...v2.0.0
 [1.0.0]: (initial release)
