@@ -1,5 +1,17 @@
 <img src="images/robot-manager512.png" alt="Cursor Global AI Manager" width="80" height="80" /> <h1>Cursor Global AI Manager</h1>
 
+[![Code CI](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/actions/workflows/ci.yml/badge.svg)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/Fenris159/Cursor-Global-AI-Manager-Extension?style=flat&logo=github&label=release)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/Fenris159/Cursor-Global-AI-Manager-Extension?style=flat&logo=github&label=license)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Fenris159/Cursor-Global-AI-Manager-Extension?style=flat&logo=github&label=stars)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/Fenris159/Cursor-Global-AI-Manager-Extension?style=flat&logo=github&label=issues)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/issues)
+[![GitHub all releases](https://img.shields.io/github/downloads/Fenris159/Cursor-Global-AI-Manager-Extension/total?style=flat&logo=github&label=downloads&cacheSeconds=600)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/releases)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/fenris159/cursor-global-ai-manager?style=flat&logo=openvsx&label=Open%20VSX%20downloads)](https://open-vsx.org/extension/fenris159/cursor-global-ai-manager)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.x-3178C6?logo=typescript&logoColor=white)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/blob/main/package.json)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/blob/main/.github/workflows/ci.yml)
+[![VS Code API](https://img.shields.io/badge/VS%20Code%20API-%5E1.85.0-007ACC?logo=visualstudiocode&logoColor=white)](https://github.com/Fenris159/Cursor-Global-AI-Manager-Extension/blob/main/package.json)
+[![Built for Cursor](https://img.shields.io/badge/Built%20for-Cursor-000000)](https://www.cursor.com/)
+
 > **Manage user-level rules, skills, subagents, commands, and hooks in one place.**  
 > Open the panel from the status bar (**Manage User AI**) or the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P` → **Manage User AI**) to browse, preview, and edit everything in `~/.cursor/` without leaving Cursor.
 
